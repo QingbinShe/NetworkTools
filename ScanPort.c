@@ -37,13 +37,15 @@ int main(int argc, char **argv)
     }
     
     if (connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
+      //printf("unuseful port: %d\n", i);
       close(sockfd);
       continue;
     }
     else {
       printf("useful port: %d\n", i);
+      close(sockfd);
+      continue;
     }
-    close(sockfd);
   }
 
   exit(0);
