@@ -37,29 +37,36 @@ int main(int argc, char **argv)
       hints.ai_family = AF_INET;
       hints.ai_socktype = SOCK_STREAM;
       char num[32];
-      itoa(i, num, 10);
+      //change int(i) to char(num)
+      sprintf(num, "%d", i);
+      printf("num is %s\n", num);
       if(getaddrinfo(argv[1], num, &hints, &res) != 0) {
 	printf("getaddrinfo error\n");
         return -1;
       }
       ressave = res;
-      do {
-        sockfd = socket(res -> ai_family, res -> ai_socktype, res -> ai_protocol);
-	if (sockfd < 0) 
+      for (; res != NULL; res = res -> ai_next) {
+        if ((sockfd = socket(res -> ai_family, res -> ai_socktype, res -> ai_protocol)) < 0) {
 	  continue;
+	}
 	if (connect(sockfd, res -> ai_addr, res -> ai_addrlen) == 0){
           printf("useful port: %d\n", i);
 	  close(sockfd);
-	  break;
+	  continue;
 	}
-	close(sockfd);
-      } while((res = res -> ai_next) != NULL);
+	else {
+	  close(sockfd);
+	}
+      }
+      res = ressave;
+      /*
       if (res == NULL) {
         printf("no address to connect\n");
 	return -1;
       }
       freeaddrinfo(ressave);
       exit(0);
+      */
     }
  
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
