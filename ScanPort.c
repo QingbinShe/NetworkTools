@@ -25,10 +25,6 @@ int main(int argc, char **argv)
   int i;
   //atoi():char* to int
   for (i = atoi(argv[2]); i < atoi(argv[3]); i++) {
-    //include in string.h
-    bzero(&servaddr, sizeof(servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(i);
     //inet_pton include in <arpa/inet.h>
     if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0) {
       //when input the DNS, use getaddrinfo
@@ -39,7 +35,7 @@ int main(int argc, char **argv)
       char num[32];
       //change int(i) to char(num)
       sprintf(num, "%d", i);
-      printf("num is %s\n", num);
+      //printf("num is %s\n", num);
       if(getaddrinfo(argv[1], num, &hints, &res) != 0) {
 	printf("getaddrinfo error\n");
         return -1;
@@ -68,23 +64,27 @@ int main(int argc, char **argv)
       exit(0);
       */
     }
- 
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-      printf("socket error\n");
-      return -1;
-    }
-   
-    if (connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
-      //printf("unuseful port: %d\n", i);
-      close(sockfd);
-      continue;
-    }
     else {
-      printf("useful port: %d\n", i);
-      close(sockfd);
-      continue;
+      //include in string.h
+      bzero(&servaddr, sizeof(servaddr));
+      servaddr.sin_family = AF_INET;
+      servaddr.sin_port = htons(i);
+      if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+          printf("socket error\n");
+          return -1;
+      }
+   
+      if (connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
+        //printf("unuseful port: %d\n", i);
+        close(sockfd);
+        continue;
+      }
+      else {
+        printf("useful port: %d\n", i);
+        close(sockfd);
+        continue;
+      }
     }
   }
-
   exit(0);
 }
