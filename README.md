@@ -12,4 +12,4 @@
 2.Function
 ----------
   - scan port: ./ScanPort TargetIP StartPort EndPort
-  - syn flood attact:./SynFlood TargetIP TargetPort SourcePort
+  - syn flood attact: ./SynFlood TargetIP TargetPort SourcePort
