@@ -40,7 +40,7 @@ void attack(int sockfd, struct sockaddr_in *target, unsigned short srcport) {
 
   ip_len = sizeof(struct iphdr) + sizeof(struct tcphdr);
   ip = (struct iphdr*) buf;
-/*
+
   ip -> ip_v = 4; //IPVERSION;
   ip -> ip_hl = sizeof(struct ip) >> 2;
   ip -> ip_tos = 0;
@@ -51,7 +51,7 @@ void attack(int sockfd, struct sockaddr_in *target, unsigned short srcport) {
   ip -> ip_p = IPPROTO_TCP;
   ip -> ip_sum = 0;
   ip -> ip_dst = target -> sin_addr;
-*/
+
   ip -> ihl = 5;
   ip -> version = 4;
   ip -> tos = 0;
